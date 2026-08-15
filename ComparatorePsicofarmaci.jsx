@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useDeferredValue } from "react";
+import React, { useState, useMemo, useDeferredValue, useEffect } from "react";
 
 /*
   COMPARATORE PSICOFARMACI — strumento didattico
@@ -3552,6 +3552,10 @@ export default function ComparatorePsicofarmaci() {
   const [scelti, setScelti] = useState([]);
   const [dettaglio, setDettaglio] = useState(null);
   const [infoAperta, setInfoAperta] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("cpf-theme") === "dark";
+  });
   const [convTab, setConvTab] = useState("gocce");
   const [gttDrug, setGttDrug] = useState("trazodone");
   const [gttVal, setGttVal] = useState("20");
@@ -3576,6 +3580,12 @@ export default function ComparatorePsicofarmaci() {
   const diq = useDeferredValue(indQ);
   const dtq = useDeferredValue(titQ);
   const dsq = useDeferredValue(sicQ);
+
+  useEffect(() => {
+    const mode = darkMode ? "dark" : "light";
+    document.documentElement.style.colorScheme = mode;
+    localStorage.setItem("cpf-theme", mode);
+  }, [darkMode]);
 
   const conteggi = useMemo(() => {
     const c = {};
@@ -3647,7 +3657,7 @@ export default function ComparatorePsicofarmaci() {
   const det = dettaglio ? drugById[dettaglio] : null;
 
   return (
-    <div className="cpf-root">
+    <div className={"cpf-root" + (darkMode ? " cpf-dark" : "")}>
       <style>{CSS}</style>
 
       <header className="cpf-header">
@@ -3660,9 +3670,14 @@ export default function ComparatorePsicofarmaci() {
               arricchito con riferimenti standard (equivalenze, CYP, monitoraggio).
             </p>
           </div>
-          <button className="cpf-infobtn" onClick={() => setInfoAperta((v) => !v)} aria-expanded={infoAperta}>
-            {infoAperta ? "Nascondi avvertenze" : "Avvertenze d’uso"}
-          </button>
+          <div className="cpf-header-actions">
+            <button className="cpf-theme-toggle" onClick={() => setDarkMode((v) => !v)} aria-label="Cambia tema">
+              {darkMode ? "☀️ Chiaro" : "🌙 Scuro"}
+            </button>
+            <button className="cpf-infobtn" onClick={() => setInfoAperta((v) => !v)} aria-expanded={infoAperta}>
+              {infoAperta ? "Nascondi avvertenze" : "Avvertenze d’uso"}
+            </button>
+          </div>
         </div>
         {infoAperta && (
           <div className="cpf-disclaimer">
@@ -4592,22 +4607,34 @@ const CSS = `
   --radius:12px; --radius-sm:8px;
   --sh-sm:0 1px 2px rgba(20,40,48,.05),0 1px 3px rgba(20,40,48,.05);
   --sh:0 6px 22px rgba(20,40,48,.09); --sh-lg:0 24px 70px rgba(12,36,44,.30);
-  font-family:var(--sans); color:var(--ink); background:var(--canvas);
+  font-family:var(--sans); color:var(--ink); background:linear-gradient(180deg,#f3f8f8 0%, #ecf3f4 100%);
   min-height:100%; line-height:1.5; -webkit-font-smoothing:antialiased; padding:0 0 64px;
+}
+.cpf-root.cpf-dark{
+  --ink:#edf6fa; --ink-soft:#bfd8de; --muted:#9bb5bb;
+  --line:#23414d; --line-soft:#1b2d38; --canvas:#0c171c; --surface:#122128; --surface-2:#172d36;
+  --accent:#5de0d2; --accent-ink:#bffaf2; --accent-soft:rgba(93,224,210,0.14); --seg-empty:#29474f;
+  --sh-sm:0 1px 2px rgba(3,9,12,.38),0 1px 3px rgba(3,9,12,.44);
+  --sh:0 10px 32px rgba(0,0,0,.42); --sh-lg:0 26px 90px rgba(0,0,0,.52);
+  background:linear-gradient(180deg,#09161a 0%, #0e1f26 100%);
 }
 .cpf-root *{box-sizing:border-box;}
 .cpf-root button{font-family:inherit; cursor:pointer;}
 
 /* ---- Header ---- */
-.cpf-header{position:sticky; top:0; z-index:20; background:rgba(255,255,255,.94); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); padding:20px clamp(16px,4vw,40px) 0;}
+.cpf-header{position:sticky; top:0; z-index:20; background:rgba(255,255,255,.82); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); padding:20px clamp(16px,4vw,40px) 0;}
+.cpf-dark .cpf-header{background:rgba(18,33,40,.8);}
 .cpf-headtop{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; max-width:1240px; margin:0 auto;}
 .cpf-brand{flex:1; min-width:0;}
 .cpf-eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); font-weight:500;}
 .cpf-title{font-family:var(--serif); font-weight:700; font-size:clamp(24px,4vw,34px); margin:4px 0 6px; letter-spacing:-.01em; color:var(--ink);}
 .cpf-source{font-size:13px; color:var(--muted); max-width:70ch; margin:0;}
 .cpf-source em{font-style:italic; color:var(--ink-soft);}
-.cpf-infobtn{flex-shrink:0; border:1px solid var(--line); background:var(--surface); color:var(--accent-ink); font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:999px; transition:.16s;}
-.cpf-infobtn:hover{border-color:var(--accent); background:var(--accent-soft);}
+.cpf-header-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.cpf-infobtn,.cpf-theme-toggle{flex-shrink:0; border:1px solid var(--line); background:var(--surface); color:var(--accent-ink); font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:999px; transition:.16s; box-shadow:var(--sh-sm);}
+.cpf-infobtn:hover,.cpf-theme-toggle:hover{border-color:var(--accent); background:var(--accent-soft); transform:translateY(-1px);}
+.cpf-theme-toggle{background:linear-gradient(135deg, rgba(14,92,107,.08), rgba(14,92,107,.18));}
+.cpf-dark .cpf-theme-toggle{background:linear-gradient(135deg, rgba(93,224,210,.14), rgba(93,224,210,.22));}
 .cpf-disclaimer{max-width:1240px; margin:14px auto 0; background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:var(--radius-sm); padding:12px 16px; font-size:12.5px; color:var(--ink-soft); line-height:1.6;}
 .cpf-nd{font-family:var(--mono); font-size:.82em; background:#eef1ec; color:#7a6a3a; padding:1px 5px; border-radius:4px; letter-spacing:.02em;}
 
@@ -4653,8 +4680,9 @@ const CSS = `
 /* ---- Card grid ---- */
 .cpf-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(248px,1fr)); gap:14px;}
 .cpf-empty{grid-column:1/-1; text-align:center; color:var(--muted); font-size:14px; padding:48px 20px; border:1px dashed var(--line); border-radius:var(--radius); background:var(--surface-2);}
-.cpf-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:15px 15px 13px; box-shadow:var(--sh-sm); transition:transform .16s,box-shadow .16s,border-color .16s; display:flex; flex-direction:column; content-visibility:auto; contain-intrinsic-size:auto 190px;}
-.cpf-card:hover{transform:translateY(-2px); box-shadow:var(--sh); border-color:#c5d2d5;}
+.cpf-card{background:linear-gradient(180deg,var(--surface) 0%, rgba(255,255,255,.94) 100%); border:1px solid var(--line); border-radius:var(--radius); padding:15px 15px 13px; box-shadow:var(--sh-sm); transition:transform .16s,box-shadow .16s,border-color .16s; display:flex; flex-direction:column; content-visibility:auto; contain-intrinsic-size:auto 190px;}
+.cpf-dark .cpf-card{background:linear-gradient(180deg,var(--surface) 0%, rgba(18,33,40,.86) 100%);}
+.cpf-card:hover{transform:translateY(-3px); box-shadow:var(--sh); border-color:rgba(14,92,107,.45);}
 .cpf-card:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 .cpf-cardhead{display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:10px;}
 .cpf-tag{font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px; letter-spacing:.01em; white-space:nowrap;}
@@ -4994,4 +5022,37 @@ button.cpf-cchip:hover{filter:brightness(.96); transform:translateY(-1px);}
 @media (prefers-reduced-motion:reduce){
   .cpf-root *,.cpf-panel,.cpf-modal,.cpf-modalcard{animation:none !important; transition:none !important;}
 }
+
+.cpf-dark .cpf-search,
+.cpf-dark .cpf-selbar,
+.cpf-dark .cpf-convcard,
+.cpf-dark .cpf-ladder,
+.cpf-dark .cpf-radarbox,
+.cpf-dark .cpf-rankwrap,
+.cpf-dark .cpf-prncard,
+.cpf-dark .cpf-sic,
+.cpf-dark .cpf-sost,
+.cpf-dark .cpf-tit,
+.cpf-dark .cpf-emg,
+.cpf-dark .cpf-cypcard,
+.cpf-dark .cpf-monitcard,
+.cpf-dark .cpf-fonti,
+.cpf-dark .cpf-scroll,
+.cpf-dark .cpf-cypecol,
+.cpf-dark .cpf-alert,
+.cpf-dark .cpf-readout,
+.cpf-dark .cpf-attrhead,
+.cpf-dark .cpf-colhead,
+.cpf-dark .cpf-cell,
+.cpf-dark .cpf-modalcard,
+.cpf-dark .cpf-modalhead,
+.cpf-dark .cpf-modalviz,
+.cpf-dark .cpf-modalfields,
+.cpf-dark .cpf-modalfoot{
+  box-shadow:var(--sh-sm);
+}
+
+.cpf-dark .cpf-readout{background:linear-gradient(180deg,rgba(93,224,210,.08), rgba(17,40,47,.9));}
+.cpf-dark .cpf-attrhead{background:#142930;}
+.cpf-dark .cpf-cell{background:rgba(11,20,24,.2);}
 `;
